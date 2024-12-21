@@ -57,6 +57,8 @@ sudo systemctl daemon-reload
 sudo systemctl enable crio --now
 sudo systemctl start crio.service
 
+sudo apt install docker.io -y
+
 echo "CRI runtime installed successfully"
 
 # Add Kubernetes APT repository and install required packages
@@ -74,53 +76,31 @@ sudo systemctl start kubelet
 ---------------------------------------------------
 ## Execute ONLY on "Master Node"
 
-
-sudo kubeadm config images pull
-
-sudo kubeadm init
+sudo kubeadm init --cri-socket=/var/run/crio/crio.sock
 
 mkdir -p "$HOME"/.kube
 sudo cp -i /etc/kubernetes/admin.conf "$HOME"/.kube/config
 sudo chown "$(id -u)":"$(id -g)" "$HOME"/.kube/config
-
 
 # Network Plugin = calico
 
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/calico.yaml
 
 kubeadm token create --print-join-command
-```
 
 - You will get `kubeadm token`, **Copy it**.
-
 
 --------------------------------------------------------
 
 ## Execute on ALL of your Worker Node's
 
-1. Perform pre-flight checks
+1. Paste the join command you got from the master node.
 
-
-   sudo kubeadm reset pre-flight checks
-
-
-2. Paste the join command you got from the master node and append `--v=5` at the end but first use sudo su command to become root (avoid using sudo your-token).
-
-   sudo su
-   <your-token --v=5>
-
+sudo <your-token> --cri-socket=/var/run/crio/crio.sock
 
 ## Verify Cluster Connection
 
 **On Master Node:**
 
-
 kubectl get nodes
-
-## Optional: Labeling Nodes
-
-If you want to label worker nodes, you can use the following command:
-
-
-kubectl label node <node-name> node-role.kubernetes.io/worker=worker
 
